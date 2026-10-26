@@ -1,5 +1,4 @@
 import tailwindcss from '@tailwindcss/vite'
-import react from '@vitejs/plugin-react'
 import { copyFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { defineConfig, loadEnv, type Plugin } from 'vite'
@@ -65,8 +64,19 @@ export default defineConfig(({ mode, command }) => {
   if (command === 'build') assertPublicKey(env.VITE_SUPABASE_ANON_KEY ?? '')
   return {
     base: env.VITE_BASE || '/',
-    plugins: [react(), tailwindcss(), securityMeta(env.VITE_SUPABASE_URL ?? ''), githubPages()],
+    plugins: [tailwindcss(), securityMeta(env.VITE_SUPABASE_URL ?? ''), githubPages()],
+    // แปลง JSX ด้วยตัวที่มากับ Vite เอง (ไม่ต้องใช้ปลั๊กอิน React เพิ่ม)
+    oxc: { jsx: { runtime: 'automatic', importSource: 'react' } },
     // ไม่ฝังไฟล์เล็กเป็น data: URI เพื่อให้ผ่าน CSP (font-src 'self')
-    build: { sourcemap: false, assetsInlineLimit: 0 },
+    build: {
+      sourcemap: false,
+      assetsInlineLimit: 0,
+      rolldownOptions: {
+        // "use client" ในไลบรารีมีผลเฉพาะ server rendering ซึ่งแอพนี้ไม่ได้ใช้
+        onwarn(w, warn) {
+          if (w.code !== 'MODULE_LEVEL_DIRECTIVE') warn(w)
+        },
+      },
+    },
   }
 })

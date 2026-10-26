@@ -7,30 +7,28 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "oxlint",
     "check:secrets": "node scripts/check-secrets.mjs",
-    "test": "vitest run"
+    "test": "node --test src/lib/format.test.ts"
   },
   "dependencies": {
-    "@fontsource/ibm-plex-sans-thai": "^5.3.0",
-    "@supabase/supabase-js": "^2.117.2",
-    "lucide-react": "^1.60.0",
-    "qrcode": "^1.5.4",
-    "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "react-router": "^7.18.4"
+    "@fontsource/ibm-plex-sans-thai": "5.3.0",
+    "@supabase/supabase-js": "2.117.2",
+    "lucide-react": "1.60.0",
+    "qrcode-generator": "2.0.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-router": "7.18.4"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.3",
-    "@types/node": "^24.19.2",
-    "@types/qrcode": "^1.5.6",
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "@vitejs/plugin-react": "^6.1.2",
-    "oxlint": "^1.88.0",
-    "tailwindcss": "^4.3.3",
-    "typescript": "~6.0.3",
-    "vite": "^8.3.4",
-    "vitest": "^5.0.5"
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3",
+    "vite": "8.3.4"
+  },
+  "engines": {
+    "node": ">=22.18"
   }
 }

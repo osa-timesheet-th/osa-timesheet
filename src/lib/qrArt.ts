@@ -1,4 +1,4 @@
-import QRCode from 'qrcode'
+import { drawQr } from './qr'
 
 export interface QrArtInfo {
   url: string
@@ -89,7 +89,7 @@ export async function makeQrArtwork(info: QrArtInfo): Promise<Blob> {
 
   // QR
   const q = document.createElement('canvas')
-  await QRCode.toCanvas(q, info.url, { width: 560, margin: 1, errorCorrectionLevel: 'M', color: { dark: '#0f172a', light: '#ffffff' } })
+  drawQr(q, info.url, 560)
   const qs = 560
   const qx = (W - qs) / 2
   const qy = 425

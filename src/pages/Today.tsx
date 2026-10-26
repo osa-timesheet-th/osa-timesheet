@@ -1,11 +1,11 @@
 import { CalendarClock, CheckCircle2, Circle, CircleDot, ClipboardCheck, Copy, Eye, EyeOff, Link2, Lock, Play, QrCode, RefreshCw, Share2, Users } from 'lucide-react'
-import QRCode from 'qrcode'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { Badge, Button, Card, CardHeader, cx, Empty, ErrorBox, PageHeader, Spinner, useToast } from '../components/ui'
 import { useAuth } from '../lib/auth'
 import { addDays, fmtDate, fmtDateLong, fmtOut, fmtTime, todayYmd } from '../lib/format'
 import { must, useLoad } from '../lib/hooks'
+import { qrDataUrl } from '../lib/qr'
 import { downloadBlob, makeQrArtwork } from '../lib/qrArt'
 import { supabase } from '../lib/supabase'
 import type { DaySheet } from '../lib/types'
@@ -325,7 +325,6 @@ function QrCard({ team }: { team: TeamRow }) {
   const toast = useToast()
   const [kind, setKind] = useState<'in' | 'out'>(() => (new Date().getHours() >= 15 ? 'out' : 'in'))
   const [qrs, setQrs] = useState<Qr[]>([])
-  const [img, setImg] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
   const [now, setNow] = useState(() => Date.now())
 
@@ -358,10 +357,7 @@ function QrCard({ team }: { team: TeamRow }) {
   }
   const fileName = `QR-${label}-${team.jobs.job_no}-${team.name}.png`
 
-  useEffect(() => {
-    if (!url) return setImg('')
-    QRCode.toDataURL(url, { width: 480, margin: 1, errorCorrectionLevel: 'M' }).then(setImg)
-  }, [url])
+  const img = useMemo(() => (url ? qrDataUrl(url) : ''), [url])
 
   async function issue() {
     setBusy('issue')
