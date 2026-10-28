@@ -180,7 +180,7 @@ export default function CostSheet() {
               <TermsStatus job={job} canEdit={false} onConfirm={() => {}} />
             </div>
           )}
-          <div className="grid gap-3 p-5 sm:grid-cols-2">
+          <div className="grid gap-3 p-5 sm:grid-cols-3">
             <Choice
               label="วันทำงาน"
               disabled
@@ -198,6 +198,16 @@ export default function CostSheet() {
               options={[
                 { v: 'true', t: `พัก ${snap.settings.break_minutes} นาที` },
                 { v: 'false', t: 'ไม่พัก (OT ต่อเลย)' },
+              ]}
+              onChange={() => {}}
+            />
+            <Choice
+              label="พักเที่ยง"
+              disabled
+              value={String(snap.job.lunch_break ?? true)}
+              options={[
+                { v: 'true', t: 'พัก 1 ชม.' },
+                { v: 'false', t: 'ไม่พักเที่ยง' },
               ]}
               onChange={() => {}}
             />

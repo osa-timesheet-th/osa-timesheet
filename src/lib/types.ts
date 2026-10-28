@@ -28,6 +28,7 @@ export interface Job {
   end_date: string
   workweek: 5 | 6
   evening_break: boolean
+  lunch_break: boolean
   status: 'active' | 'closed'
   terms_confirmed_by: string | null
   terms_confirmed_at: string | null
@@ -153,7 +154,7 @@ export interface CostWorker {
 }
 
 export interface CostSnapshot {
-  job: { id: string; job_no: string; title: string; contractor: string | null; location: string | null; workweek: 5 | 6; evening_break: boolean }
+  job: { id: string; job_no: string; title: string; contractor: string | null; location: string | null; workweek: 5 | 6; evening_break: boolean; lunch_break?: boolean }
   period: { from: string; to: string }
   settings: { normal_hours: number; wht_rate: number; break_minutes: number; round_minutes: number; company: string }
   holidays: string[]

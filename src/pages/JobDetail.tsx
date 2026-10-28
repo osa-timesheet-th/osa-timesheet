@@ -318,6 +318,25 @@ export default function JobDetail() {
                 ))}
               </div>
             </div>
+            <div>
+              <p className="mb-2 text-sm font-medium text-slate-700">พักเที่ยง</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {[
+                  { v: true, t: 'มีพักเที่ยง 1 ชม.', d: 'หักช่วง 12:00–13:00 ออกจากชั่วโมงทำงาน' },
+                  { v: false, t: 'ไม่พักเที่ยง', d: 'ไม่หักช่วงเที่ยง นับชั่วโมงทำงานเต็ม' },
+                ].map((o) => (
+                  <button
+                    key={String(o.v)}
+                    disabled={!canPrice}
+                    onClick={() => saveTerms({ lunch_break: o.v })}
+                    className={`rounded-xl border-2 p-4 text-left transition ${job.lunch_break === o.v ? 'border-brand-500 bg-brand-50' : 'border-slate-200 hover:border-slate-300'} disabled:cursor-default`}
+                  >
+                    <p className="font-medium text-slate-900">{o.t}</p>
+                    <p className="text-sm text-slate-500">{o.d}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
               <p className="font-medium text-slate-800">ตัวคูณ (เรทต่อชั่วโมง = ค่าแรงต่อวัน ÷ 8)</p>
               <div className="mt-2 grid grid-cols-2 gap-1 sm:grid-cols-4">

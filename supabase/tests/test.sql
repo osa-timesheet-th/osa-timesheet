@@ -466,4 +466,39 @@ select pg_temp.ok(pg_temp.raises($q$update public.profiles set role = 'admin' wh
 reset role;
 
 
+
+-- ---------- 14. ลงเวลาผ่าน QR บนมือถือที่ล็อกอินเป็นพนักงาน = ผู้รับเหมาลงเอง ----------
+reset role; set role authenticated; select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select public.create_job(format('{"job_no":"KIOSK1","title":"ทดสอบ QR","start_date":"%s","end_date":"%s","teams":[{"name":"A","supervisor_id":"00000000-0000-0000-0000-000000000001","members":[{"full_name":"คนทดสอบ คิวอาร์"}]}]}',
+  public.bkk_today() - 1, public.bkk_today() + 3)::jsonb) as kjob \gset
+select id as kteam from public.teams where job_id = :'kjob' \gset
+select pg_temp.as_user('00000000-0000-0000-0000-000000000001');
+select public.open_day(:'kteam');
+reset role;
+insert into public.kiosk_tokens (team_id, kind, expires_at) values (:'kteam', 'in', now() + interval '1 hour') returning token as ktok \gset
+select w.id as kw, p.pin as kpin from public.workers w join public.daily_pins p on p.worker_id = w.id where w.job_id = :'kjob' \gset
+set role authenticated; select pg_temp.as_user('00000000-0000-0000-0000-000000000001');
+select pg_temp.ok((public.kiosk_clock(:'ktok', :'kw', :'kpin', 'in') ->> 'ok')::boolean, 'สแกน QR เข้างานบนมือถือที่หัวหน้าล็อกอินค้างไว้ได้');
+reset role;
+select pg_temp.ok((select source = 'self' and edit_count = 0 and updated_by is null from public.attendance where worker_id = :'kw'),
+  'บันทึกเป็นผู้รับเหมาลงเอง ไม่ใช่หัวหน้าแก้ (ไม่ขึ้นสีแดง)');
+
+
+-- ---------- 15. พักเที่ยงต่อจ็อบ ----------
+reset role; set role authenticated; select pg_temp.as_user('00000000-0000-0000-0000-00000000000a');
+select public.create_job(format('{"job_no":"LUNCH1","title":"ทดสอบพักเที่ยง","start_date":"%s","end_date":"%s","teams":[{"name":"A","supervisor_id":"00000000-0000-0000-0000-000000000001","members":[{"full_name":"คนทดสอบ เที่ยง"}]}]}',
+  public.bkk_today() - 3, public.bkk_today() + 3)::jsonb) as ljob \gset
+select pg_temp.as_user('00000000-0000-0000-0000-000000000001');
+insert into public.attendance (worker_id, team_id, check_in, check_out)
+select w.id, w.team_id, (public.bkk_today() - 2 + time '08:00') at time zone 'Asia/Bangkok', (public.bkk_today() - 2 + time '17:00') at time zone 'Asia/Bangkok'
+from public.workers w where w.job_id = :'ljob';
+select pg_temp.ok((select normal_h = 8 and ot_h = 0 from public.v_attendance_hours where job_id = :'ljob'), 'มีพักเที่ยง (ค่าเริ่มต้น): 08:00–17:00 = ปกติ 8 ชม.');
+select pg_temp.ok(pg_temp.raises(format('update public.jobs set lunch_break = false where id = %L', :'ljob'))
+                  or (select lunch_break from public.jobs where id = :'ljob'), 'หัวหน้างานเปลี่ยนพักเที่ยงไม่ได้');
+select pg_temp.as_user('00000000-0000-0000-0000-0000000000c1');
+update public.jobs set lunch_break = false, evening_break = false where id = :'ljob';
+select pg_temp.ok((select normal_h = 8 and ot_h = 1 from public.v_attendance_hours where job_id = :'ljob'), 'ไม่พักเที่ยง: 08:00–17:00 = ปกติ 8 + OT 1 ชม.');
+select pg_temp.ok((select terms_confirmed_by = '00000000-0000-0000-0000-0000000000c1' from public.jobs where id = :'ljob'), 'เปลี่ยนพักเที่ยง = Purchase ยืนยันเงื่อนไขใหม่');
+select pg_temp.ok((public.cost_preview(:'ljob', public.bkk_today() - 3, public.bkk_today()) -> 'job' ->> 'lunch_break')::boolean = false, 'ใบคิดราคาบันทึกเงื่อนไขพักเที่ยง');
+
 \echo ALL TESTS PASSED

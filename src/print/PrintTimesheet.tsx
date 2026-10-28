@@ -209,7 +209,7 @@ export function TimesheetDoc({ data }: { data: CostDocData }) {
               <div className="mt-4 flex items-start justify-between gap-6 text-[10px]" style={{ breakInside: 'avoid' }}>
                 <div className="space-y-0.5">
                   <p>
-                    วันทำงาน {snap.job.workweek} วัน/สัปดาห์ · {snap.job.evening_break ? `พักเย็น ${snap.settings.break_minutes} นาทีก่อน OT` : 'ไม่พักก่อน OT'} · เรท/ชม. = ค่าแรงต่อวัน ÷ {snap.settings.normal_hours}
+                    วันทำงาน {snap.job.workweek} วัน/สัปดาห์ · {snap.job.lunch_break === false ? 'ไม่พักเที่ยง' : 'พักเที่ยง 12:00–13:00'} · {snap.job.evening_break ? `พักเย็น ${snap.settings.break_minutes} นาทีก่อน OT` : 'ไม่พักก่อน OT'} · เรท/ชม. = ค่าแรงต่อวัน ÷ {snap.settings.normal_hours}
                   </p>
                   <p>ช่องสีเทา = วันหยุด (×2, OT ×3)</p>
                 </div>
