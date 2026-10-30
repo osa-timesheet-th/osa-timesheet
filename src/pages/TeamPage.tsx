@@ -29,7 +29,7 @@ export default function TeamPage() {
     const today = todayYmd()
     const [job, teams, workers, pins, att, sheet, settings] = await Promise.all([
       supabase.from('jobs').select('*').eq('id', team.job_id).single(),
-      supabase.from('teams').select('id, name').eq('job_id', team.job_id).order('name'),
+      supabase.from('teams').select('id, name, supervisor_id').eq('job_id', team.job_id).order('name'),
       supabase.from('workers').select('*').eq('team_id', id).order('active', { ascending: false }).order('full_name'),
       supabase.from('daily_pins').select('worker_id, pin, failed_attempts').eq('work_date', today),
       supabase.from('attendance').select('id, worker_id, check_in, check_out').eq('team_id', id).eq('work_date', today),
@@ -39,7 +39,7 @@ export default function TeamPage() {
     return {
       team,
       job: must(job) as Job,
-      teams: must(teams) as { id: string; name: string }[],
+      teams: must(teams) as { id: string; name: string; supervisor_id: string | null }[],
       workers: must(workers) as Worker[],
       pins: must(pins) as Pin[],
       att: must(att) as Att[],
@@ -53,6 +53,8 @@ export default function TeamPage() {
   if (error || !data) return <ErrorBox message={error ?? 'ไม่พบทีม'} onRetry={reload} />
   const { team, job, teams, workers, pins, att, sheetId, maxAttempts } = data
   if (!(is('admin') || team.supervisor_id === profile?.id)) return <Forbidden />
+  // ย้ายคนได้เฉพาะทีมที่ตัวเองดูแล (เซิร์ฟเวอร์บังคับเหมือนกัน)
+  const myTeams = teams.filter((t) => is('admin') || t.supervisor_id === profile?.id)
 
   const pinOf = (w: string) => pins.find((p) => p.worker_id === w)
   const attOf = (w: string) => att.find((a) => a.worker_id === w)
@@ -234,10 +236,10 @@ export default function TeamPage() {
             <Field label="ตำแหน่ง">
               <Input maxLength={40} value={edit.position ?? ''} onChange={(e) => setEdit({ ...edit, position: e.target.value })} />
             </Field>
-            {teams.length > 1 && (
-              <Field label="ทีม" hint="ย้ายไปทีมอื่นในจ็อบเดียวกันได้ เวลาที่ลงไปแล้วยังอยู่กับทีมเดิม">
+            {myTeams.length > 1 && (
+              <Field label="ทีม" hint="ย้ายไปทีมอื่นของคุณในจ็อบเดียวกันได้ เวลาที่ลงไปแล้วยังอยู่กับทีมเดิม">
                 <Select value={edit.team_id ?? id} onChange={(e) => setEdit({ ...edit, team_id: e.target.value })}>
-                  {teams.map((t) => (
+                  {myTeams.map((t) => (
                     <option key={t.id} value={t.id}>
                       {t.name}
                     </option>
