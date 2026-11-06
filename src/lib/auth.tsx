@@ -15,8 +15,8 @@ interface AuthState {
 
 const Ctx = createContext<AuthState | null>(null)
 
-// ไม่ได้ใช้งานเกิน 60 นาที ให้ออกจากระบบในเครื่องนี้ (กันคนอื่นหยิบเครื่องที่ล็อกอินค้างไว้)
-const IDLE_MS = 60 * 60 * 1000
+// ไม่ได้ใช้งานเกิน 3 วัน ให้ออกจากระบบในเครื่องนี้ (กันคนอื่นหยิบเครื่องที่ล็อกอินค้างไว้)
+const IDLE_MS = 3 * 24 * 60 * 60 * 1000
 const LAST_KEY = 'osa-last-active'
 export function markActive() {
   try {
