@@ -135,6 +135,8 @@ export interface CostDay {
   ot: number
   approved: boolean
   edits?: number
+  /** % ของชั่วโมงวันนั้นที่คิดในจ็อบนี้ (มีเมื่อแบ่งชั่วโมงระหว่างจ็อบ) */
+  share?: number
 }
 
 export interface CostWorker {
@@ -142,6 +144,8 @@ export interface CostWorker {
   name: string
   position: string
   team: string
+  /** เลขจ็อบต้นทาง ถ้าชั่วโมงของคนนี้ถูกแบ่งมาจากจ็อบอื่น */
+  from_job?: string | null
   day_rate: number
   unit: number
   work_days: number
@@ -158,6 +162,7 @@ export interface CostSnapshot {
   period: { from: string; to: string }
   settings: { normal_hours: number; wht_rate: number; break_minutes: number; round_minutes: number; company: string }
   holidays: string[]
+  allocations?: { direction: 'in' | 'out'; job_no: string; from: string; to: string; pct: number }[]
   workers: CostWorker[]
   subtotal: number
   wht: number

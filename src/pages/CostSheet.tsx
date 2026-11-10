@@ -13,6 +13,8 @@ import type { CostSheet as CS, CostSnapshot, Job } from '../lib/types'
 
 type DayRow = {
   id: string
+  job_id: string
+  job_no: string
   work_date: string
   team_name: string
   supervisor_id: string | null
@@ -39,12 +41,16 @@ export default function CostSheet() {
 
   const { data, error, loading, reload } = useLoad(async () => {
     const cs = must(await supabase.from('cost_sheets').select('*').eq('id', id).single()) as CS
+    // จ็อบที่แบ่งชั่วโมงมาให้: ใบรายวันของจ็อบนั้นต้องอนุมัติครบด้วย
+    const incoming = must(
+      await supabase.from('job_allocations').select('source_job_id, date_from, date_to').eq('target_job_id', cs.job_id),
+    ) as { source_job_id: string; date_from: string; date_to: string }[]
     const [job, days, teams, appr] = await Promise.all([
       supabase.from('jobs').select('*').eq('id', cs.job_id).single(),
       supabase
         .from('v_day_sheets')
-        .select('id, work_date, team_name, supervisor_id, people, supervisor_approved_at, planner_approved_at')
-        .eq('job_id', cs.job_id)
+        .select('id, job_id, job_no, work_date, team_name, supervisor_id, people, supervisor_approved_at, planner_approved_at')
+        .in('job_id', [cs.job_id, ...new Set(incoming.map((a) => a.source_job_id))])
         .gte('work_date', cs.period_from)
         .lte('work_date', cs.period_to),
       supabase.from('teams').select('supervisor_id, supervisor:profiles(id, full_name, email)').eq('job_id', cs.job_id),
@@ -59,7 +65,10 @@ export default function CostSheet() {
       (t) => t.supervisor && sups.set(t.supervisor.id, t.supervisor.full_name || t.supervisor.email),
     )
     // วันที่เปิดลงเวลาแต่ไม่มีใครมาทำงาน ไม่ต้องรออนุมัติ
-    const dayRows = (must(days) as DayRow[]).filter((d) => d.people > 0)
+    const dayRows = (must(days) as DayRow[])
+      .filter((d) => d.people > 0)
+      .filter((d) => d.job_id === cs.job_id || incoming.some((a) => a.source_job_id === d.job_id && d.work_date >= a.date_from && d.work_date <= a.date_to))
+      .map((d) => (d.job_id === cs.job_id ? d : { ...d, team_name: `${d.job_no} · ${d.team_name}` }))
     return { cs, job: must(job) as Job, snap, sups, appr: must(appr) as { supervisor_id: string; approved_at: string; approver_name: string | null }[], dayRows }
   }, [id])
 
@@ -239,6 +248,20 @@ export default function CostSheet() {
           </ul>
         </Card>
       </div>
+
+      {snap.allocations && snap.allocations.length > 0 && (
+        <Card className="mb-6 p-4 text-sm text-slate-600">
+          <p className="mb-1 font-medium text-slate-800">มีการแบ่งชั่วโมงระหว่างจ็อบในช่วงนี้</p>
+          <ul className="space-y-0.5">
+            {snap.allocations.map((a) => (
+              <li key={`${a.direction}${a.job_no}${a.from}`}>
+                {fmtDate(a.from)} – {fmtDate(a.to)} ·{' '}
+                {a.direction === 'in' ? `รับ ${Number(a.pct)}% ของชั่วโมงจาก ${a.job_no}` : `แบ่ง ${Number(a.pct)}% ไปคิดที่ ${a.job_no}`}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {/* แถบปุ่มดำเนินการ */}
       <Card className="mb-6 p-4">

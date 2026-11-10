@@ -1,6 +1,7 @@
 import { ArrowLeft, CalendarDays, ChevronRight, FileSpreadsheet, Pencil, Plus, Trash2, UserRound, Users } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { JobAllocation } from '../components/JobAllocation'
 import { JobBudgetCard } from '../components/Budget'
 import { JobRates } from '../components/JobRates'
 import { TermsStatus } from '../components/TermsStatus'
@@ -32,6 +33,7 @@ export default function JobDetail() {
   const [newCost, setNewCost] = useState<{ from: string; to: string } | null>(null)
   const [busy, setBusy] = useState(false)
   const [delText, setDelText] = useState<string | null>(null)
+  const [allocVer, setAllocVer] = useState(0)
 
   const { data, error, loading, reload } = useLoad(async () => {
     const today = todayYmd()
@@ -139,7 +141,7 @@ export default function JobDetail() {
         }
       />
 
-      <JobBudgetCard jobId={id} />
+      <JobBudgetCard key={allocVer} jobId={id} />
 
       <Tabs
         value={tab}
@@ -232,6 +234,13 @@ export default function JobDetail() {
       )}
 
       {tab === 'cost' && (
+        <>
+        <JobAllocation
+          job={job}
+          canEdit={canPrice}
+          lockedUntil={costs.filter((c) => c.status !== 'draft').reduce<string | undefined>((m, c) => (!m || c.period_to > m ? c.period_to : m), undefined)}
+          onChanged={() => setAllocVer((v) => v + 1)}
+        />
         <Card>
           <CardHeader
             title="ใบคิดราคา"
@@ -272,6 +281,7 @@ export default function JobDetail() {
             </ul>
           )}
         </Card>
+        </>
       )}
 
       {tab === 'terms' && (
